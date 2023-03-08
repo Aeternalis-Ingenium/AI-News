@@ -1,0 +1,80 @@
+version: '3.9'
+services:
+  mongoDBServer:
+    image:  mongo:latest
+    container_name: mongoDBServer
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    expose:
+      - '27017'
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongoDBServer:/data/db
+
+  mongoExpress:
+    image: mongo-express
+    restart: always
+    expose:
+      - '8081'
+    ports:
+      - 8082:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_URL: ${MONGODB_LOCAL_URL}
+    depends_on:
+      - mongoDBServer
+
+  ai_news_app:
+    container_name: ai_news_app
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: ./app/
+    environment:
+      - API_VERSION=${API_VERSION}
+      - ENVIRONMENT=${ENVIRONMENT}
+      - IS_DEBUG=${IS_DEBUG}
+      - BACKEND_SERVER_HOST=${BACKEND_SERVER_HOST}
+      - BACKEND_SERVER_PORT=${BACKEND_SERVER_PORT}
+      - BACKEND_SERVER_WORKERS=${BACKEND_SERVER_WORKERS}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+      - DATABASE_URL=${DATABASE_URL}
+      - ACCESS_TOKEN_EXPIRES_IN=${ACCESS_TOKEN_EXPIRES_IN}
+      - REFRESH_TOKEN_EXPIRES_IN=${REFRESH_TOKEN_EXPIRES_IN}
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
+      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+      - IS_ALLOWED_CREDENTIALS=${IS_ALLOWED_CREDENTIALS}
+      - JWT_SUBJECT=${JWT_SUBJECT}
+      - JWT_TOKEN_PREFIX=${JWT_TOKEN_PREFIX}
+      - JWT_ALGORITHM=${JWT_ALGORITHM}
+      - BCRYPT_HASHING_ALGORITHM=${BCRYPT_HASHING_ALGORITHM}
+      - ARGON2_HASHING_ALGORITHM=${ARGON2_HASHING_ALGORITHM}
+      - SHA256_HASHING_ALGORITHM=${SHA256_HASHING_ALGORITHM}
+      - SHA512_HASHING_ALGORITHM=${SHA512_HASHING_ALGORITHM}
+      - HASHING_SALT=${HASHING_SALT}
+      - PWD_ALGORITHM_LAYER_1=${PWD_ALGORITHM_LAYER_1}
+      - PWD_ALGORITHM_LAYER_2=${PWD_ALGORITHM_LAYER_2}
+      - CLIENT_ORIGIN_LOCALHOST=${CLIENT_ORIGIN_LOCALHOST}
+      - CLIENT_ORIGIN_DOCKER=${CLIENT_ORIGIN_DOCKER}
+      - METHOD=${METHOD}
+      - HEADER=${HEADER}
+    volumes:
+      - ./app/:/usr/app/
+    expose:
+      - 8000
+    ports:
+      - 8001:8000
+    depends_on:
+      - mongoDBServer
+
+volumes:
+  mongoDBServer:
